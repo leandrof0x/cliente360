@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CLIENTE360
 
-## Getting Started
+> Deja de perder clientes por falta de seguimiento. CLIENTE360 organiza tu negocio y te ayuda a convertir más consultas en ventas.
 
-First, run the development server:
+SaaS multiempresa de gestión de clientes, ventas y seguimientos para pequeños y medianos negocios.
+
+**Stack:** Next.js 15 (App Router, Server Actions) · TypeScript · Tailwind CSS 4 · Supabase (PostgreSQL, Auth, RLS) · Recharts · Lucide · Vercel.
+
+## Estado
+
+| Etapa | Contenido | Estado |
+|---|---|---|
+| 1 | Proyecto, diseño, autenticación, multiempresa, base de datos, dashboard | ✅ Completa — ver [docs/ETAPA-1.md](docs/ETAPA-1.md) |
+| 2 | CRM, clientes, pipeline, seguimientos, tareas | En curso |
+| 3 | WhatsApp, plantillas, agenda, automatizaciones | Pendiente |
+| 4 | CLIENTE AI, reportes, exportaciones | Pendiente |
+| 5 | Suscripciones, panel administrador, seguridad, producción | Pendiente |
+
+## Instalación local
+
+Requisitos: Node.js 20+ y un proyecto de Supabase (plan gratuito).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # completar con los datos de Supabase
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Base de datos
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Las migraciones están en `supabase/migrations/` y se aplican en orden:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Opción A (Supabase CLI):** `npx supabase link --project-ref TU_REF` y luego `npx supabase db push`.
+- **Opción B (manual):** en Supabase → SQL Editor, ejecutar cada archivo de `supabase/migrations/` en orden.
 
-## Learn More
+### Autenticación (Supabase → Authentication → URL Configuration)
 
-To learn more about Next.js, take a look at the following resources:
+- **Site URL:** la URL de la app (ej. `https://cliente360.vercel.app`).
+- **Redirect URLs:** `https://TU-DOMINIO/auth/callback` y `http://localhost:3000/auth/callback`.
+- Proveedor *Email* activado. Se recomienda dejar activa la confirmación de correo.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Administrador de la plataforma
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+El panel general de CLIENTE360 (etapa 5) usa la tabla `platform_admins`, independiente de los roles de las empresas. Para darte acceso, después de registrarte ejecutá en el SQL Editor:
 
-## Deploy on Vercel
+```sql
+insert into public.platform_admins (user_id)
+select id from auth.users where email = 'tu-correo@ejemplo.com';
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run check` | TypeScript + ESLint + pruebas unitarias |
+| `npm test` | Pruebas unitarias (Vitest) |
+| `npm run db:test` | Aplica las migraciones en un PostgreSQL local y ejecuta las pruebas de seguridad RLS (requiere `psql` con acceso a un servidor local) |
+
+## Despliegue en Vercel
+
+1. Importar el repositorio en Vercel (framework: Next.js, sin cambios de build).
+2. Cargar las variables de `.env.example` en *Settings → Environment Variables*. `SUPABASE_SERVICE_ROLE_KEY` solo en el servidor (nunca con prefijo `NEXT_PUBLIC_`).
+3. Poner `NEXT_PUBLIC_SITE_URL` con el dominio final y agregar `https://DOMINIO/auth/callback` en las Redirect URLs de Supabase.
+4. Deploy.
+
+## Estructura
+
+```
+src/
+  app/
+    (auth)/          ingresar, registro, recuperar
+    (app)/           área privada: dashboard, configuración…
+    actions/         Server Actions (validadas con Zod, ejecutadas con la sesión del usuario)
+    auth/            callbacks de Supabase Auth
+  components/        UI y módulos
+  lib/               supabase, sesión/empresa activa, validaciones, utilidades
+supabase/
+  migrations/        esquema, RLS, funciones
+  tests/             pruebas de aislamiento multiempresa (SQL)
+docs/                documentación por etapa
+```
