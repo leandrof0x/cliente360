@@ -1,6 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { isServiceRoleConfigured } from "@/lib/server-env";
+import { processOutbox } from "@/lib/outbox";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +18,18 @@ const LEAD_KEYS = [
   "assigned_to", "status", "next_action", "next_follow_up_at", "lost_reason",
 ];
 const STATUSES = ["nueva", "contactado", "interesado", "seguimiento", "negociacion", "ganado", "perdido"] as const;
+
+/** Entrega en segundo plano los eventos que hayan disparado las automatizaciones. */
+function flushOutbox(organizationId: string) {
+  if (!isServiceRoleConfigured()) return;
+  after(async () => {
+    try {
+      await processOutbox({ organizationId, limit: 20 });
+    } catch (e) {
+      console.error("[outbox]", e);
+    }
+  });
+}
 
 function revalidateLeads(leadId?: string, customerId?: string) {
   revalidatePath("/pipeline");
@@ -43,6 +58,7 @@ export async function saveLead(leadId: string | null, _: ActionResult | null, fo
     const { error } = await supabase.from("leads").update(row).eq("id", leadId).eq("organization_id", ctx.org.id);
     if (error) return { ok: false, error: friendlyDbError(error) };
     revalidateLeads(leadId, input.customer_id);
+    flushOutbox(ctx.org.id);
     return { ok: true, message: "Oportunidad actualizada." };
   }
 
@@ -62,6 +78,7 @@ export async function saveLead(leadId: string | null, _: ActionResult | null, fo
     .single();
   if (error || !data) return { ok: false, error: friendlyDbError(error) };
   revalidateLeads(data.id, input.customer_id);
+  flushOutbox(ctx.org.id);
   redirect(`/pipeline/${data.id}?creada=1`);
 }
 
@@ -90,6 +107,7 @@ export async function moveLead(input: { leadId: string; status: LeadStatus; posi
   if (error) return { ok: false, error: friendlyDbError(error) };
   if (!data?.length) return { ok: false, error: "No se encontró la oportunidad." };
   revalidateLeads(parsed.data.leadId, data[0].customer_id);
+  flushOutbox(ctx.org.id);
   return { ok: true };
 }
 

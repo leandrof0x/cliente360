@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/ui/button";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { WhatsAppLink } from "@/components/ui/whatsapp-link";
+import { WhatsAppComposeDialog } from "@/components/whatsapp/compose-dialog";
 import { InteractionForm } from "@/components/customers/interaction-form";
 import { Timeline, type InteractionRow } from "@/components/customers/timeline";
 import { TaskFormDialog } from "@/components/tasks/task-form";
@@ -57,7 +57,7 @@ export default async function CustomerPage({
     .maybeSingle();
   if (!customer) notFound();
 
-  const [{ data: leads }, { data: interactions }, { data: tasks }, members] = await Promise.all([
+  const [{ data: leads }, { data: interactions }, { data: tasks }, members, { data: templates }] = await Promise.all([
     supabase
       .from("leads")
       .select("id, title, status, estimated_value, next_follow_up_at, product_service")
@@ -78,6 +78,7 @@ export default async function CustomerPage({
       .order("due_at", { ascending: true, nullsFirst: false })
       .limit(30),
     getMemberOptions(ctx.org.id),
+    supabase.from("message_templates").select("id, name, body").eq("organization_id", ctx.org.id).eq("channel", "whatsapp").order("name"),
   ]);
 
   const memberName = new Map(members.map((m) => [m.id, m.name]));
@@ -116,7 +117,22 @@ export default async function CustomerPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {wa && <WhatsAppLink number={wa} label="WhatsApp" className="h-10 rounded-lg border border-success-100 bg-success-50 px-4 hover:bg-success-100" />}
+          <WhatsAppComposeDialog
+            customerId={id}
+            leadId={openLeads[0]?.id ?? null}
+            phone={wa}
+            templates={templates ?? []}
+            canLog={ctx.writable}
+            vars={{
+              nombre: customer.full_name,
+              primer_nombre: customer.full_name.split(" ")[0],
+              empresa_cliente: customer.company,
+              negocio: ctx.org.name,
+              vendedor: ctx.user.fullName,
+              producto: openLeads[0]?.product_service ?? openLeads[0]?.title,
+              valor: openLeads[0] ? formatGs(openLeads[0].estimated_value) : null,
+            }}
+          />
           {ctx.writable && (
             <ButtonLink href={`/clientes/${id}/editar`} variant="secondary"><Pencil className="h-4 w-4" /> Editar</ButtonLink>
           )}

@@ -26,7 +26,7 @@ function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; on
   );
 }
 
-export function Sidebar({ orgSwitcher }: { orgSwitcher: React.ReactNode }) {
+export function Sidebar({ orgSwitcher, isManager }: { orgSwitcher: React.ReactNode; isManager: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
@@ -45,7 +45,7 @@ export function Sidebar({ orgSwitcher }: { orgSwitcher: React.ReactNode }) {
       </div>
       <div className="px-3 pb-3">{orgSwitcher}</div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2" aria-label="Principal">
-        {NAV_ITEMS.map((item) => (
+        {NAV_ITEMS.filter((i) => !i.managersOnly || isManager).map((item) => (
           <NavLink key={item.href} item={item} active={isActive(item.href)} />
         ))}
       </nav>

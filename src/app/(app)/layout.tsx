@@ -2,13 +2,14 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { OrgSwitcher } from "@/components/layout/org-switcher";
 import { SubscriptionBanner } from "@/components/layout/subscription-banner";
-import { getOrgContext } from "@/lib/session";
+import { getOrgContext, canManage } from "@/lib/session";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getOrgContext();
   return (
     <div className="min-h-dvh">
       <Sidebar
+        isManager={canManage(ctx.role)}
         orgSwitcher={
           <OrgSwitcher
             current={ctx.org.id}

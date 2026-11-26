@@ -12,8 +12,8 @@ SaaS multiempresa de gestión de clientes, ventas y seguimientos para pequeños 
 |---|---|---|
 | 1 | Proyecto, diseño, autenticación, multiempresa, base de datos, dashboard | ✅ Completa — ver [docs/ETAPA-1.md](docs/ETAPA-1.md) |
 | 2 | CRM, clientes, pipeline, seguimientos, tareas | ✅ Completa — ver [docs/ETAPA-2.md](docs/ETAPA-2.md) |
-| 3 | WhatsApp, plantillas, agenda, automatizaciones | En curso |
-| 4 | CLIENTE AI, reportes, exportaciones | Pendiente |
+| 3 | WhatsApp, plantillas, agenda, automatizaciones | ✅ Completa — ver [docs/ETAPA-3.md](docs/ETAPA-3.md) |
+| 4 | CLIENTE AI, reportes, exportaciones | En curso |
 | 5 | Suscripciones, panel administrador, seguridad, producción | Pendiente |
 
 ## Instalación local
@@ -58,10 +58,14 @@ select id from auth.users where email = 'tu-correo@ejemplo.com';
 | `npm test` | Pruebas unitarias (Vitest) |
 | `npm run db:test` | Aplica las migraciones en un PostgreSQL local y ejecuta las pruebas de seguridad RLS (requiere `psql` con acceso a un servidor local) |
 
+## Integraciones
+
+Credenciales y pasos para WhatsApp (API oficial), n8n y tareas programadas: [docs/INTEGRACIONES.md](docs/INTEGRACIONES.md).
+
 ## Despliegue en Vercel
 
 1. Importar el repositorio en Vercel (framework: Next.js, sin cambios de build).
-2. Cargar las variables de `.env.example` en *Settings → Environment Variables*. `SUPABASE_SERVICE_ROLE_KEY` solo en el servidor (nunca con prefijo `NEXT_PUBLIC_`).
+2. Cargar las variables de `.env.example` en *Settings → Environment Variables* (incluido `CRON_SECRET`; Vercel lo envía automáticamente a la tarea diaria definida en `vercel.json`). `SUPABASE_SERVICE_ROLE_KEY` solo en el servidor (nunca con prefijo `NEXT_PUBLIC_`).
 3. Poner `NEXT_PUBLIC_SITE_URL` con el dominio final y agregar `https://DOMINIO/auth/callback` en las Redirect URLs de Supabase.
 4. Deploy.
 

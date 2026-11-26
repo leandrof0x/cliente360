@@ -9,6 +9,9 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OrganizationForm, ProfileForm } from "@/components/settings/forms";
+import { WhatsAppChannel, type WhatsAppConnection } from "@/components/settings/whatsapp-channel";
+import { isServiceRoleConfigured, isWhatsAppWebhookConfigured } from "@/lib/server-env";
+import { publicEnv } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Configuración" };
 
@@ -35,10 +38,11 @@ const FEATURE_LABELS: Record<string, string> = {
 export default async function SettingsPage() {
   const ctx = await getOrgContext();
   const supabase = await createClient();
-  const [{ data: members }, { data: plans }, { count: customerCount }] = await Promise.all([
+  const [{ data: members }, { data: plans }, { count: customerCount }, { data: waConn }] = await Promise.all([
     supabase.from("organization_members").select("user_id, role, created_at").eq("organization_id", ctx.org.id),
     supabase.from("plans").select("*").eq("is_active", true).order("sort_order"),
     supabase.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", ctx.org.id),
+    supabase.from("channel_connections").select("status, display_name, authorized_at").eq("organization_id", ctx.org.id).eq("channel", "whatsapp").maybeSingle(),
   ]);
   const ids = (members ?? []).map((m) => m.user_id);
   const { data: profiles } = ids.length
@@ -85,6 +89,18 @@ export default async function SettingsPage() {
                   );
                 })}
               </ul>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader title="Canales de mensajería" description="Nunca se envían mensajes automáticos sin un canal conectado y autorizado." />
+            <CardBody>
+              <WhatsAppChannel
+                connection={waConn as WhatsAppConnection | null}
+                canManage={canManage(ctx.role) && ctx.writable}
+                webhookUrl={`${publicEnv.siteUrl.replace(/\/$/, "")}/api/webhooks/whatsapp`}
+                serverReady={{ serviceRole: isServiceRoleConfigured(), webhook: isWhatsAppWebhookConfigured() }}
+              />
             </CardBody>
           </Card>
 

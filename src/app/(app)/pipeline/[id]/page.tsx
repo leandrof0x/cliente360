@@ -15,7 +15,7 @@ import type { LeadStatus } from "@/lib/types";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { WhatsAppLink } from "@/components/ui/whatsapp-link";
+import { WhatsAppComposeDialog } from "@/components/whatsapp/compose-dialog";
 import { LeadForm } from "@/components/pipeline/lead-form";
 import { TaskFormDialog } from "@/components/tasks/task-form";
 import { TaskItem, type TaskRow } from "@/components/tasks/task-item";
@@ -29,13 +29,13 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const supabase = await createClient();
   const { data: lead } = await supabase
     .from("leads")
-    .select("*, customers(id, full_name, whatsapp, phone)")
+    .select("*, customers(id, full_name, whatsapp, phone, company)")
     .eq("id", id)
     .eq("organization_id", ctx.org.id)
     .maybeSingle();
   if (!lead) notFound();
 
-  const [{ data: history }, { data: tasks }, members, customers] = await Promise.all([
+  const [{ data: history }, { data: tasks }, members, customers, { data: templates }] = await Promise.all([
     supabase.from("lead_status_changes").select("id, from_status, to_status, changed_by, changed_at").eq("lead_id", id).order("changed_at", { ascending: false }),
     supabase
       .from("tasks")
@@ -46,9 +46,10 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       .order("due_at", { ascending: true, nullsFirst: false }),
     getMemberOptions(ctx.org.id),
     getCustomerOptions(ctx.org.id),
+    supabase.from("message_templates").select("id, name, body").eq("organization_id", ctx.org.id).eq("channel", "whatsapp").order("name"),
   ]);
   const memberName = new Map(members.map((m) => [m.id, m.name]));
-  const customer = lead.customers as { id: string; full_name: string; whatsapp: string | null; phone: string | null } | null;
+  const customer = lead.customers as { id: string; full_name: string; whatsapp: string | null; phone: string | null; company: string | null } | null;
   const color = LEAD_STATUSES.find((s) => s.id === lead.status)?.color;
   const taskRows: TaskRow[] = (tasks ?? []).map((t) => ({ ...t, assignee_name: t.assigned_to ? (memberName.get(t.assigned_to) ?? null) : null }));
 
@@ -67,7 +68,24 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {customer && <WhatsAppLink number={customer.whatsapp ?? customer.phone} label="WhatsApp" className="h-10 rounded-lg border border-success-100 bg-success-50 px-4 hover:bg-success-100" />}
+          {customer && (
+            <WhatsAppComposeDialog
+              customerId={customer.id}
+              leadId={id}
+              phone={customer.whatsapp ?? customer.phone}
+              templates={templates ?? []}
+              canLog={ctx.writable}
+              vars={{
+                nombre: customer.full_name,
+                primer_nombre: customer.full_name.split(" ")[0],
+                empresa_cliente: customer.company,
+                negocio: ctx.org.name,
+                vendedor: ctx.user.fullName,
+                producto: lead.product_service ?? lead.title,
+                valor: formatGs(lead.estimated_value),
+              }}
+            />
+          )}
           {ctx.writable && ctx.role !== "collaborator" && (
             <ConfirmButton
               variant="ghost"
