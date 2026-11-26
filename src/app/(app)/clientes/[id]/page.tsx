@@ -20,8 +20,12 @@ import { InteractionForm } from "@/components/customers/interaction-form";
 import { Timeline, type InteractionRow } from "@/components/customers/timeline";
 import { TaskFormDialog } from "@/components/tasks/task-form";
 import { TaskItem, type TaskRow } from "@/components/tasks/task-item";
+import { AIPanel } from "@/components/ai/ai-panel";
+import { aiAvailability } from "@/lib/ai/availability";
 
 export const metadata: Metadata = { title: "Cliente" };
+// CLIENTE AI puede tardar varios segundos en responder
+export const maxDuration = 60;
 
 const statusTone = { nuevo: "brand", activo: "success", inactivo: "neutral" } as const;
 
@@ -170,6 +174,7 @@ export default async function CustomerPage({
         </div>
 
         <div className="space-y-6">
+          <AIPanel kind="customer" id={id} customerId={id} phone={wa} canLog={ctx.writable} availability={aiAvailability(ctx)} />
           <Card>
             <CardHeader
               title="Oportunidades"

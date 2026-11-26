@@ -13,8 +13,8 @@ SaaS multiempresa de gestión de clientes, ventas y seguimientos para pequeños 
 | 1 | Proyecto, diseño, autenticación, multiempresa, base de datos, dashboard | ✅ Completa — ver [docs/ETAPA-1.md](docs/ETAPA-1.md) |
 | 2 | CRM, clientes, pipeline, seguimientos, tareas | ✅ Completa — ver [docs/ETAPA-2.md](docs/ETAPA-2.md) |
 | 3 | WhatsApp, plantillas, agenda, automatizaciones | ✅ Completa — ver [docs/ETAPA-3.md](docs/ETAPA-3.md) |
-| 4 | CLIENTE AI, reportes, exportaciones | En curso |
-| 5 | Suscripciones, panel administrador, seguridad, producción | Pendiente |
+| 4 | CLIENTE AI, reportes, exportaciones | ✅ Completa — ver [docs/ETAPA-4.md](docs/ETAPA-4.md) |
+| 5 | Suscripciones, panel administrador, seguridad, producción | En curso |
 
 ## Instalación local
 

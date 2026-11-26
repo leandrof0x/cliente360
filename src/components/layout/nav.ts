@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarDays, KanbanSquare, LayoutDashboard, MessageSquareText, Settings, Users, Workflow, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarCheck, CalendarDays, KanbanSquare, LayoutDashboard, MessageSquareText, Settings, Sparkles, Users, Workflow, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -16,6 +16,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/seguimientos", label: "Seguimientos", icon: CalendarCheck },
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/plantillas", label: "Plantillas", icon: MessageSquareText },
+  { href: "/asistente", label: "CLIENTE AI", icon: Sparkles },
+  { href: "/reportes", label: "Reportes", icon: BarChart3, managersOnly: true },
   { href: "/automatizaciones", label: "Automatizaciones", icon: Workflow, managersOnly: true },
 ];
 

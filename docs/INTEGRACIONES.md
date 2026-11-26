@@ -8,8 +8,17 @@
 | n8n | Lista | Solo pegar la URL del webhook de n8n en una automatización |
 | WhatsApp v1 (manual) | Funcionando | Nada |
 | WhatsApp v2 (API oficial) | Preparada | App de Meta + variables de abajo |
-| CLIENTE AI | Etapa 4 | — |
+| CLIENTE AI (Anthropic Claude) | Preparada | `ANTHROPIC_API_KEY` en Vercel (ver abajo) |
 | Pasarela de pagos (Paraguay) | Etapa 5 | — |
+
+## CLIENTE AI
+
+Variables del servidor (nunca con prefijo `NEXT_PUBLIC_`):
+- `ANTHROPIC_API_KEY`: clave de console.anthropic.com → Settings → API keys. Hay que cargar saldo o un medio de pago en la cuenta de Anthropic; el costo depende del uso.
+- `AI_PROVIDER`: opcional, por defecto `anthropic`.
+- `AI_MODEL`: opcional, por defecto `claude-opus-5-5`.
+
+Sin la clave, CLIENTE AI muestra que falta configurarlo y no responde nada simulado. Cada consulta descuenta del cupo mensual del plan (Inicial 0, Profesional 200, Negocio 1000; editable en la tabla `plans`). Para cambiar de proveedor se implementa la interfaz `AIProvider` de `src/lib/ai/types.ts` y se registra en `src/lib/ai/index.ts`.
 
 ## WhatsApp Business Platform (API oficial)
 

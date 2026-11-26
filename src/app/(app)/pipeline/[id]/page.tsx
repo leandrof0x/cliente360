@@ -19,8 +19,12 @@ import { WhatsAppComposeDialog } from "@/components/whatsapp/compose-dialog";
 import { LeadForm } from "@/components/pipeline/lead-form";
 import { TaskFormDialog } from "@/components/tasks/task-form";
 import { TaskItem, type TaskRow } from "@/components/tasks/task-item";
+import { AIPanel } from "@/components/ai/ai-panel";
+import { aiAvailability } from "@/lib/ai/availability";
 
 export const metadata: Metadata = { title: "Oportunidad" };
+// CLIENTE AI puede tardar varios segundos en responder
+export const maxDuration = 60;
 
 export default async function LeadPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ creada?: string }> }) {
   const { id } = await params;
@@ -115,6 +119,9 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           </CardBody>
         </Card>
         <div className="space-y-6">
+          {customer && (
+            <AIPanel kind="lead" id={id} customerId={customer.id} phone={customer.whatsapp ?? customer.phone} canLog={ctx.writable} availability={aiAvailability(ctx)} />
+          )}
           <Card>
             <CardHeader
               title="Tareas de esta oportunidad"

@@ -9,6 +9,10 @@ export const serverEnv = {
   whatsappGraphVersion: process.env.WHATSAPP_GRAPH_VERSION ?? "v21.0",
   // Protege el endpoint de tareas programadas (Vercel Cron)
   cronSecret: process.env.CRON_SECRET ?? "",
+  // CLIENTE AI — proveedor intercambiable (por defecto Anthropic Claude)
+  aiProvider: (process.env.AI_PROVIDER ?? "anthropic").toLowerCase(),
+  aiModel: process.env.AI_MODEL ?? "",
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
 };
 
 export const isServiceRoleConfigured = () => Boolean(serverEnv.supabaseServiceRoleKey);
