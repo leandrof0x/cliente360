@@ -9,7 +9,9 @@
 | WhatsApp v1 (manual) | Funcionando | Nada |
 | WhatsApp v2 (API oficial) | Preparada | App de Meta + variables de abajo |
 | CLIENTE AI (Anthropic Claude) | Preparada | `ANTHROPIC_API_KEY` en Vercel (ver abajo) |
-| Pasarela de pagos (Paraguay) | Etapa 5 | — |
+| Cobro de suscripciones | Funcionando (manual) | Instrucciones de pago en `/admin/ajustes`; los pagos se confirman en `/admin` |
+| Pasarela de pagos (Paraguay) | Preparada (contrato) | Elegir proveedor y obtener credenciales (ver abajo) |
+| Correo transaccional (SMTP) | Recomendado | SMTP propio en Supabase para confirmaciones y recuperación de contraseña |
 
 ## CLIENTE AI
 
@@ -36,6 +38,18 @@ Pasos:
 6. (Opcional) Autorizar envíos automáticos.
 
 Notas de Meta: para iniciar conversación o escribir pasadas 24 h del último mensaje del cliente, Meta exige **plantillas aprobadas**; el envío de texto libre funciona dentro de esa ventana. Las conversaciones tienen costo según la tarifa de Meta para Paraguay.
+
+## Pasarela de pagos (Paraguay)
+
+Hoy **no hay cobro en línea ni cobros simulados**: las empresas solicitan el plan, pagan por transferencia u otro medio, y el administrador registra el pago en `/admin`.
+
+Para integrar una pasarela (por ejemplo Bancard vPOS o Pagopar):
+1. Firmar con el proveedor y obtener las credenciales de comercio (clave pública/privada o token y URL del ambiente de pruebas y de producción).
+2. Implementar el contrato `PaymentGateway` de `src/lib/payments/types.ts` siguiendo la documentación oficial del proveedor.
+3. Crear el webhook `/api/webhooks/pagos/<proveedor>` que verifique la firma del aviso y registre el pago (equivalente a `platform_record_payment`).
+4. Agregar las variables (ej. `PAYMENT_PROVIDER`, `PAYMENT_PUBLIC_KEY`, `PAYMENT_PRIVATE_KEY`) solo en el servidor.
+
+Con esas credenciales, la integración es un trabajo acotado: el registro de pagos, la activación y la extensión de los períodos ya existen y están probados.
 
 ## n8n
 En una automatización elegir "Enviar los datos a n8n" y pegar la URL de un nodo **Webhook** (método POST). El cuerpo enviado:

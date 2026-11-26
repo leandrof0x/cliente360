@@ -14,7 +14,7 @@ SaaS multiempresa de gestión de clientes, ventas y seguimientos para pequeños 
 | 2 | CRM, clientes, pipeline, seguimientos, tareas | ✅ Completa — ver [docs/ETAPA-2.md](docs/ETAPA-2.md) |
 | 3 | WhatsApp, plantillas, agenda, automatizaciones | ✅ Completa — ver [docs/ETAPA-3.md](docs/ETAPA-3.md) |
 | 4 | CLIENTE AI, reportes, exportaciones | ✅ Completa — ver [docs/ETAPA-4.md](docs/ETAPA-4.md) |
-| 5 | Suscripciones, panel administrador, seguridad, producción | En curso |
+| 5 | Equipo, suscripciones, panel administrador, seguridad, producción | ✅ Completa — ver [docs/ETAPA-5.md](docs/ETAPA-5.md) |
 
 ## Instalación local
 
@@ -58,14 +58,18 @@ select id from auth.users where email = 'tu-correo@ejemplo.com';
 | `npm test` | Pruebas unitarias (Vitest) |
 | `npm run db:test` | Aplica las migraciones en un PostgreSQL local y ejecuta las pruebas de seguridad RLS (requiere `psql` con acceso a un servidor local) |
 
-## Integraciones
+## Documentación
 
-Credenciales y pasos para WhatsApp (API oficial), n8n y tareas programadas: [docs/INTEGRACIONES.md](docs/INTEGRACIONES.md).
+- [docs/DEPLOY.md](docs/DEPLOY.md): puesta en producción paso a paso (Supabase + Vercel).
+- [docs/INTEGRACIONES.md](docs/INTEGRACIONES.md): integraciones pendientes y credenciales necesarias (WhatsApp, CLIENTE AI, pagos, n8n).
+- [docs/CHECKLIST-PRUEBAS.md](docs/CHECKLIST-PRUEBAS.md): pruebas manuales antes de vender.
+- `docs/ETAPA-1.md` a `docs/ETAPA-5.md`: qué se construyó en cada etapa.
 
 ## Despliegue en Vercel
 
+Resumen (detalle en [docs/DEPLOY.md](docs/DEPLOY.md)):
 1. Importar el repositorio en Vercel (framework: Next.js, sin cambios de build).
-2. Cargar las variables de `.env.example` en *Settings → Environment Variables* (incluido `CRON_SECRET`; Vercel lo envía automáticamente a la tarea diaria definida en `vercel.json`). `SUPABASE_SERVICE_ROLE_KEY` solo en el servidor (nunca con prefijo `NEXT_PUBLIC_`).
+2. Cargar las variables de `.env.example` en *Settings → Environment Variables*. `SUPABASE_SERVICE_ROLE_KEY` y `ANTHROPIC_API_KEY` van solo al servidor (nunca con prefijo `NEXT_PUBLIC_`).
 3. Poner `NEXT_PUBLIC_SITE_URL` con el dominio final y agregar `https://DOMINIO/auth/callback` en las Redirect URLs de Supabase.
 4. Deploy.
 
@@ -75,7 +79,9 @@ Credenciales y pasos para WhatsApp (API oficial), n8n y tareas programadas: [doc
 src/
   app/
     (auth)/          ingresar, registro, recuperar
-    (app)/           área privada: dashboard, configuración…
+    (app)/           área privada: dashboard, clientes, pipeline, agenda, CLIENTE AI, reportes…
+    admin/           panel de la plataforma (solo administradores de CLIENTE360)
+    api/             webhooks (WhatsApp), cron, exportación
     actions/         Server Actions (validadas con Zod, ejecutadas con la sesión del usuario)
     auth/            callbacks de Supabase Auth
   components/        UI y módulos

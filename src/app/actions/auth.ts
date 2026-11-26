@@ -49,13 +49,13 @@ export async function signUp(_: ActionResult | null, formData: FormData): Promis
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName },
-      emailRedirectTo: `${await siteUrl()}/auth/callback?next=/onboarding`,
+      emailRedirectTo: `${await siteUrl()}/auth/callback?next=${encodeURIComponent(safeNext(formData.get("next"), "/onboarding"))}`,
     },
   });
   if (error) return { ok: false, error: authErrorMessage(error.message) };
 
   // Si la confirmación por correo está desactivada, ya hay sesión.
-  if (data.session) redirect("/onboarding");
+  if (data.session) redirect(safeNext(formData.get("next"), "/onboarding"));
   return {
     ok: true,
     message: `Te enviamos un correo a ${parsed.data.email}. Abrí el enlace para confirmar tu cuenta.`,

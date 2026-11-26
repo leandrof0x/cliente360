@@ -18,7 +18,7 @@ export function SubscriptionBanner({ ctx }: { ctx: OrgContext }) {
       <Banner tone="danger" icon={<Lock className="h-4 w-4" />}>
         Tu {sub?.status === "trialing" ? "período de prueba terminó" : "suscripción está vencida"}. Tus datos están a salvo
         en modo solo lectura.{" "}
-        <Link href="/configuracion" className="font-semibold underline">
+        <Link href="/suscripcion" className="font-semibold underline">
           Ver opciones de plan
         </Link>
       </Banner>
@@ -30,7 +30,7 @@ export function SubscriptionBanner({ ctx }: { ctx: OrgContext }) {
       return (
         <Banner tone="info" icon={<Clock className="h-4 w-4" />}>
           Te {days === 1 ? "queda 1 día" : `quedan ${days} días`} de prueba gratis del plan {ctx.plan?.name}.{" "}
-          <Link href="/configuracion" className="font-semibold underline">
+          <Link href="/suscripcion" className="font-semibold underline">
             Ver planes
           </Link>
         </Banner>

@@ -13,7 +13,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <SignInForm next={next} linkError={error === "enlace"} />
       <p className="mt-6 text-center text-sm text-slate-600">
         ¿No tenés cuenta?{" "}
-        <Link href="/registro" className="font-medium text-brand-600 hover:text-brand-700">
+        <Link href={next && next.startsWith("/") && !next.startsWith("//") ? `/registro?next=${encodeURIComponent(next)}` : "/registro"} className="font-medium text-brand-600 hover:text-brand-700">
           Creá una gratis
         </Link>
       </p>

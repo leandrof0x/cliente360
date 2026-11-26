@@ -1,11 +1,17 @@
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { LogOut, ShieldCheck } from "lucide-react";
 import { signOut } from "@/app/actions/auth";
 import { initials } from "@/lib/utils";
 
-export function Topbar({ name, email }: { name: string | null; email: string | null }) {
+export function Topbar({ name, email, isPlatformAdmin }: { name: string | null; email: string | null; isPlatformAdmin?: boolean }) {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-end gap-3 border-b border-slate-200/70 bg-canvas/85 px-4 backdrop-blur sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
+        {isPlatformAdmin && (
+          <Link href="/admin" className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-800">
+            <ShieldCheck className="h-3.5 w-3.5" /> Plataforma
+          </Link>
+        )}
         <div className="hidden text-right sm:block">
           <p className="text-sm font-medium leading-tight text-slate-900">{name ?? email}</p>
           {name && <p className="text-xs leading-tight text-slate-500">{email}</p>}

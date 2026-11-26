@@ -46,3 +46,17 @@ export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
   media: "Media",
   alta: "Alta",
 };
+
+export const FEATURE_LABELS: Record<string, string> = {
+  crm: "CRM de clientes",
+  pipeline: "Pipeline comercial",
+  followups: "Seguimientos",
+  dashboard: "Dashboard",
+  templates: "Plantillas de mensajes",
+  agenda: "Agenda",
+  reports: "Reportes comerciales",
+  exports: "Exportar a Excel/CSV",
+  automations: "Automatizaciones",
+  ai: "CLIENTE AI",
+  team: "Gestión de equipo",
+};

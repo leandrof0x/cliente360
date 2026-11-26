@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Check } from "lucide-react";
 import { getOrgContext, canManage } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
-import { ROLE_LABELS, SUBSCRIPTION_STATUS_LABELS } from "@/lib/constants";
-import { formatGs, initials } from "@/lib/utils";
-import type { OrgRole, Plan } from "@/lib/types";
+import { SUBSCRIPTION_STATUS_LABELS } from "@/lib/constants";
+import type { OrgRole } from "@/lib/types";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OrganizationForm, ProfileForm } from "@/components/settings/forms";
+import { TeamManager } from "@/components/settings/team-manager";
+import { ButtonLink } from "@/components/ui/button";
+import { siteUrl } from "@/lib/site-url";
 import { WhatsAppChannel, type WhatsAppConnection } from "@/components/settings/whatsapp-channel";
 import { isServiceRoleConfigured, isWhatsAppWebhookConfigured } from "@/lib/server-env";
 import { publicEnv } from "@/lib/env";
@@ -21,26 +22,15 @@ function fmtDate(iso: string | null) {
     : "—";
 }
 
-const FEATURE_LABELS: Record<string, string> = {
-  crm: "CRM de clientes",
-  pipeline: "Pipeline comercial",
-  followups: "Seguimientos",
-  dashboard: "Dashboard",
-  templates: "Plantillas de mensajes",
-  agenda: "Agenda",
-  reports: "Reportes comerciales",
-  exports: "Exportar a Excel/CSV",
-  automations: "Automatizaciones",
-  ai: "CLIENTE AI",
-  team: "Gestión de equipo",
-};
 
 export default async function SettingsPage() {
   const ctx = await getOrgContext();
   const supabase = await createClient();
-  const [{ data: members }, { data: plans }, { count: customerCount }, { data: waConn }] = await Promise.all([
+  const [{ data: members }, { data: invitations }, { count: customerCount }, { data: waConn }] = await Promise.all([
     supabase.from("organization_members").select("user_id, role, created_at").eq("organization_id", ctx.org.id),
-    supabase.from("plans").select("*").eq("is_active", true).order("sort_order"),
+    canManage(ctx.role)
+      ? supabase.from("organization_invitations").select("id, email, role, token, expires_at").eq("organization_id", ctx.org.id).is("accepted_at", null).gt("expires_at", new Date().toISOString()).order("created_at")
+      : Promise.resolve({ data: [] as { id: string; email: string; role: string; token: string; expires_at: string }[] }),
     supabase.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", ctx.org.id),
     supabase.from("channel_connections").select("status, display_name, authorized_at").eq("organization_id", ctx.org.id).eq("channel", "whatsapp").maybeSingle(),
   ]);
@@ -50,6 +40,7 @@ export default async function SettingsPage() {
     : { data: [] };
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
   const sub = ctx.subscription;
+  const base = await siteUrl();
   const plan = ctx.plan;
 
   return (
@@ -70,25 +61,18 @@ export default async function SettingsPage() {
           <Card>
             <CardHeader title="Equipo" description={`${members?.length ?? 0} de ${plan?.max_users ?? "—"} usuarios del plan`} />
             <CardBody className="pt-3">
-              <ul className="divide-y divide-slate-100">
-                {(members ?? []).map((m) => {
+              <TeamManager
+                orgName={ctx.org.name}
+                members={(members ?? []).map((m) => {
                   const p = profileById.get(m.user_id);
-                  return (
-                    <li key={m.user_id} className="flex items-center gap-3 py-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
-                        {initials(p?.full_name ?? p?.email)}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-slate-900">
-                          {p?.full_name ?? p?.email ?? "Usuario"} {m.user_id === ctx.user.id && <span className="text-slate-400">(vos)</span>}
-                        </p>
-                        <p className="truncate text-xs text-slate-500">{p?.email}</p>
-                      </div>
-                      <Badge tone={m.role === "owner" ? "brand" : "neutral"}>{ROLE_LABELS[m.role as OrgRole]}</Badge>
-                    </li>
-                  );
+                  return { user_id: m.user_id, role: m.role as OrgRole, name: p?.full_name ?? p?.email ?? "Usuario", email: p?.email ?? null };
                 })}
-              </ul>
+                invitations={(invitations ?? []).map((i) => ({ id: i.id, email: i.email, role: i.role as OrgRole, expires_at: i.expires_at, link: `${base}/invitacion/${i.token}` }))}
+                currentUserId={ctx.user.id}
+                currentRole={ctx.role}
+                canEdit={ctx.writable}
+                maxUsers={plan?.max_users ?? null}
+              />
             </CardBody>
           </Card>
 
@@ -149,37 +133,9 @@ export default async function SettingsPage() {
             </CardBody>
           </Card>
 
-          <Card>
-            <CardHeader title="Planes" description="Precios mensuales en guaraníes." />
-            <CardBody className="space-y-3">
-              {((plans ?? []) as Plan[]).map((p) => (
-                <div key={p.id} className={`rounded-xl border p-4 ${p.id === plan?.id ? "border-brand-500 bg-brand-50/50" : "border-slate-200"}`}>
-                  <div className="flex items-baseline justify-between">
-                    <p className="font-semibold text-slate-900">{p.name}</p>
-                    <p className="tabular text-sm font-semibold text-slate-900">{formatGs(p.price_gs)}</p>
-                  </div>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {p.max_users === 1 ? "1 usuario" : `Hasta ${p.max_users} usuarios`} ·{" "}
-                    {p.max_customers ? `hasta ${p.max_customers} clientes` : "clientes ilimitados"}
-                  </p>
-                  <ul className="mt-2 grid grid-cols-1 gap-1">
-                    {Object.entries(p.features)
-                      .filter(([, v]) => v && v !== "false")
-                      .map(([key]) => (
-                        <li key={key} className="flex items-center gap-1.5 text-xs text-slate-600">
-                          <Check className="h-3 w-3 text-success-600" aria-hidden /> {FEATURE_LABELS[key] ?? key}
-                        </li>
-                      ))}
-                  </ul>
-                  {p.id === plan?.id && <p className="mt-2 text-xs font-medium text-brand-700">Tu plan actual</p>}
-                </div>
-              ))}
-              <p className="text-xs text-slate-500">
-                El pago en línea todavía no está habilitado. Para contratar o cambiar de plan, comunicate con el equipo de
-                CLIENTE360 y lo activamos manualmente.
-              </p>
-            </CardBody>
-          </Card>
+          {canManage(ctx.role) && (
+            <ButtonLink href="/suscripcion" variant="secondary" className="w-full">Ver planes, pagos y cambiar de plan</ButtonLink>
+          )}
         </div>
       </div>
     </>

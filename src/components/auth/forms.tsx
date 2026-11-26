@@ -44,11 +44,12 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: boo
   );
 }
 
-export function SignUpForm() {
+export function SignUpForm({ next }: { next?: string }) {
   const [state, action] = useActionState(signUp, null);
   if (state?.ok) return <Feedback state={state} />;
   return (
     <form action={action} className="space-y-4" noValidate>
+      {next && <input type="hidden" name="next" value={next} />}
       <Feedback state={state} />
       <Field label="Tu nombre" htmlFor="fullName" error={err(state, "fullName")}>
         <Input id="fullName" name="fullName" autoComplete="name" required placeholder="Nombre y apellido" />
