@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   AlarmClock,
   Briefcase,
@@ -38,7 +39,7 @@ interface UrgentTask {
   type: TaskType;
   priority: TaskPriority;
   due_at: string;
-  customers: { full_name: string } | null;
+  customers: { id: string; full_name: string } | null;
 }
 
 function endOfTodayPy() {
@@ -74,7 +75,7 @@ export default async function DashboardPage({
     }),
     supabase
       .from("tasks")
-      .select("id, title, type, priority, due_at, customers(full_name)")
+      .select("id, title, type, priority, due_at, customers(id, full_name)")
       .eq("organization_id", ctx.org.id)
       .eq("status", "pendiente")
       .not("due_at", "is", null)
@@ -129,7 +130,8 @@ export default async function DashboardPage({
     actor_name: a.actor_id ? (actorName.get(a.actor_id) ?? null) : null,
   }));
 
-  const urgentCount = k.overdue_tasks + k.today_tasks + k.unanswered_leads + k.overdue_lead_followups;
+  // Los seguimientos de oportunidades ya generan tareas automáticas: no se cuentan dos veces.
+  const urgentCount = k.overdue_tasks + k.today_tasks + k.unanswered_leads;
   const isEmpty = k.total_customers === 0 && k.open_leads === 0 && k.pending_tasks === 0;
   const firstName = ctx.user.fullName?.split(" ")[0];
 
@@ -144,7 +146,12 @@ export default async function DashboardPage({
       {isEmpty && (
         <Alert tone="info" title="Tu panel está listo" className="mb-6">
           Los indicadores se calculan con los clientes, oportunidades y tareas que registres. Todavía no hay datos
-          cargados en {ctx.org.name}.
+          cargados en {ctx.org.name}.{" "}
+          {ctx.writable && (
+            <Link href="/clientes/nuevo" className="font-semibold underline">
+              Registrá tu primer cliente
+            </Link>
+          )}
         </Alert>
       )}
 
@@ -159,10 +166,13 @@ export default async function DashboardPage({
                 : "No tenés pendientes urgentes. ¡Buen trabajo!"
             }
             action={
-              <div className="flex flex-wrap justify-end gap-1.5">
+              <div className="flex flex-wrap items-center justify-end gap-1.5">
                 {k.overdue_tasks > 0 && <Badge tone="danger">{k.overdue_tasks} vencidas</Badge>}
                 {k.today_tasks > 0 && <Badge tone="warning">{k.today_tasks} para hoy</Badge>}
                 {k.unanswered_leads > 0 && <Badge tone="brand">{k.unanswered_leads} sin responder</Badge>}
+                <Link href="/seguimientos" className="ml-1 text-sm font-medium text-brand-700 hover:underline">
+                  Ver todo
+                </Link>
               </div>
             }
           />
@@ -188,7 +198,15 @@ export default async function DashboardPage({
                             <p className="truncate text-sm font-medium text-slate-900">{t.title}</p>
                             <p className="truncate text-xs text-slate-500">
                               {TASK_TYPE_LABELS[t.type]}
-                              {t.customers?.full_name ? ` · ${t.customers.full_name}` : ""} ·{" "}
+                              {t.customers && (
+                                <>
+                                  {" · "}
+                                  <Link href={`/clientes/${t.customers.id}`} className="text-brand-700 hover:underline">
+                                    {t.customers.full_name}
+                                  </Link>
+                                </>
+                              )}{" "}
+                              ·{" "}
                               <span className={due.overdue ? "font-medium text-red-600" : ""}>
                                 {due.overdue ? "Vencida · " : ""}
                                 {due.label}
@@ -215,10 +233,10 @@ export default async function DashboardPage({
                       const hours = Math.floor((Date.now() - new Date(l.created_at).getTime()) / 3600000);
                       return (
                         <li key={l.id} className="flex items-center gap-3 px-3 py-2.5">
-                          <div className="min-w-0 flex-1">
+                          <Link href={`/pipeline/${l.id}`} className="min-w-0 flex-1 hover:text-brand-700">
                             <p className="truncate text-sm font-medium text-slate-900">{l.customers?.full_name ?? "Cliente"}</p>
                             <p className="truncate text-xs text-slate-500">{l.title}</p>
-                          </div>
+                          </Link>
                           <span className={`text-xs font-medium ${hours >= 24 ? "text-red-600" : "text-slate-500"}`}>
                             {hours < 1 ? "hace minutos" : hours < 48 ? `hace ${hours} h` : `hace ${Math.floor(hours / 24)} días`}
                           </span>
@@ -226,12 +244,6 @@ export default async function DashboardPage({
                       );
                     })}
                   </ul>
-                )}
-                {k.overdue_lead_followups > 0 && (
-                  <p className="mt-3 text-sm text-amber-700">
-                    {k.overdue_lead_followups} oportunidad{k.overdue_lead_followups === 1 ? "" : "es"} con la fecha de
-                    seguimiento vencida.
-                  </p>
                 )}
               </div>
             </CardBody>
