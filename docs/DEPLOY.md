@@ -5,7 +5,7 @@ Tiempo estimado: 30 a 45 minutos. Todo funciona en los planes gratuitos de Supab
 ## 1. Supabase (base de datos y login)
 
 1. Crear un proyecto en https://supabase.com. Región sugerida: **São Paulo (sa-east-1)**, la más cercana a Paraguay. Guardá la contraseña de la base.
-2. **Aplicar las migraciones** en orden (las 7 de `supabase/migrations/`):
+2. **Aplicar las migraciones** en orden (las 8 de `supabase/migrations/`):
    - Opción A, con la CLI: `npx supabase link --project-ref TU_REF` y después `npx supabase db push`.
    - Opción B, manual: en *SQL Editor*, ejecutar cada archivo en orden (`…000001` a `…000007`).
 3. *Authentication → URL Configuration*:
