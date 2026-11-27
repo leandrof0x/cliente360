@@ -4,6 +4,8 @@
 
 SaaS multiempresa de gestión de clientes, ventas y seguimientos para pequeños y medianos negocios.
 
+**Producción:** https://cliente360-inky.vercel.app (Vercel + Supabase, proyecto `cliente360`).
+
 **Stack:** Next.js 15 (App Router, Server Actions) · TypeScript · Tailwind CSS 4 · Supabase (PostgreSQL, Auth, RLS) · Recharts · Lucide · Vercel.
 
 ## Estado
